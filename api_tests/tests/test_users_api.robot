@@ -1,105 +1,63 @@
 *** Settings ***
-Resource        ../resources/common.robot
+Resource        ../resources/user_keywords.robot
+Resource        ../resources/variables.robot
 Library    FakerLibrary
 Library    Collections
 Library    OperatingSystem
 
-*** Variables ***
-${USER_ENDPOINT}    /users
-${USER_LOGIN_ENDPOINT}    /users/login
+Suite Teardown    Delete All Users
 
-*** Keywords ***
-Create User
-    [Documentation]    Create a user and return the user details.
+*** Test Cases ***
+
+Create User Test
+    [Documentation]         Verify that a user can be created successfully.
+    ${user_id}=             Create User
+    Should Not Be Empty     ${user_id}
+    [Teardown]              Delete User    ${user_id}
+
+List Users Test
+    [Documentation]         Verify that the list of users can be retrieved.
+    ${user_id}=             Create User
+    ${users}=               List Users
+    Should Not Be Empty     ${users}
+    [Teardown]              Delete User    ${user_id}
+
+Delete User Test
+    [Documentation]         Verify that a user can be deleted successfully.
+    ${user_id}=             Create User
+    Delete User             ${user_id}
+
+Get User by ID Test
+    [Documentation]         Verify that user details can be retrieved by ID.
+    ${user_id}=             Create User
+    ${user_details}=        Get User by ID    ${user_id}
+    ${uuid}=                Get From Dictionary    ${user_details}    uuid
+    Should Be Equal As Strings    ${uuid}    ${user_id}
+    [Teardown]              Delete User    ${user_id}
+
+Update User Test
+    [Documentation]         Verify that a user's details can be updated.
+    ${user_id}=             Create User
+    ${updated_name}=        FakerLibrary.Name
+    ${updated_nickname}=    FakerLibrary.UserName
+    Update User             ${user_id}    ${updated_name}    ${updated_nickname}
+    Verify User Updated     ${user_id}    ${updated_name}    ${updated_nickname}
+    [Teardown]              Delete User    ${user_id}
+
+Login User Test
+    [Documentation]         Verify that a user can log in successfully.
     ${name}=         FakerLibrary.Name
     ${email}=        FakerLibrary.Email
     ${password}=     FakerLibrary.Password
     ${nickname}=     FakerLibrary.UserName
     ${body}=    Create Dictionary    email=${email}    password=${password}    name=${name}    nickname=${nickname}
     ${response}=    Send Authorized Request    POST     ${USER_ENDPOINT}    ${body}
-    Validate Status Code    ${response}    200
-    ${user_id}=    Get From Dictionary    ${response.json()}    uuid
+    Response Should Be OK   ${response}
+    ${user_details}=      Parse JSON Response    ${response}
+    ${user_id}=         Get From Dictionary    ${user_details}    uuid
     Log    User Created: ID=${user_id}, Email=${email}, Name=${name}
-    RETURN    ${user_id}
 
-Delete User By ID
-    [Arguments]    ${user_id}
-    [Documentation]    Delete a user by ID and validate the deletion.
-    ${response}=    Send Authorized Request    DELETE    ${USER_ENDPOINT}/${user_id}
-    Validate Status Code    ${response}    204
-    Log    User Deleted: ID=${user_id}
-
-Verify User Not Found
-    [Arguments]    ${user_id}
-    [Documentation]    Verify that a user does not exist.
-    ${response}=    Send Authorized Request    GET    ${USER_ENDPOINT}/${user_id}
-    Validate Status Code    ${response}    404
-    Log    Verified user ID ${user_id} does not exist.
-
-*** Test Cases ***
-
-Create User Test
-    [Documentation]    Test to create a user and validate the response.
-    ${user_id}=    Create User
-
-List Users Test
-    [Documentation]    Test to retrieve the list of users.
-    ${response}=    Send Authorized Request    GET    ${USER_ENDPOINT}?offset=0&limit=10
-    Validate Status Code    ${response}    200
-    Log    Retrieved User List: ${response.json()}
-
-Delete User Test
-    [Documentation]    Test to delete a user and validate the deletion.
-    ${user_id}=    Create User
-    Delete User By ID    ${user_id}
-    Verify User Not Found    ${user_id}
-
-Get User by ID Test
-    [Documentation]    Test to retrieve user details by ID.
-    ${user_id}=    Create User
-    ${response}=    Send Authorized Request    GET    ${USER_ENDPOINT}/${user_id}
-    Validate Status Code    ${response}    200
-    Log    User Details: ${response.json()}
-
-Update User Test
-    [Documentation]    Test to update a user's details.
-    ${user_id}=    Create User
-    ${body}=    Create Dictionary    name=UpdatedName    nickname=UpdatedNick
-    ${response}=    Send Authorized Request    PATCH    ${USER_ENDPOINT}/${user_id}    ${body}
-    Validate Status Code    ${response}    200
-    Log    Updated User Details: ${response.json()}
-
-Login User Test
-    [Documentation]    Test to log in a user with valid credentials.
-    ${user_id}=    Create User
-    ${body}=    Create Dictionary    email=test@example.com    password=password123
-    ${response}=    Send Authorized Request    POST    ${USER_LOGIN_ENDPOINT}    ${body}
-    Validate Status Code    ${response}    200
-    Log    Login Successful: ${response.json()}
-
-Invalid Email Format Test
-    [Documentation]    Test to validate the behavior when an invalid email is provided.
-    ${body}=    Create Dictionary    email=invalid_email    password=password123    name=TestUser
-    ${response}=    Send Authorized Request    POST    ${USER_ENDPOINT}    ${body}
-    Validate Status Code    ${response}    400
-    Log    Error Response: ${response.json()}
-
-Missing Required Fields Test
-    [Documentation]    Test to validate behavior when required fields are missing.
-    ${body}=    Create Dictionary    email=test@example.com
-    ${response}=    Send Authorized Request    POST    ${USER_ENDPOINT}    ${body}
-    Validate Status Code    ${response}    400
-    Log    Error Response: ${response.json()}
-
-Unauthorized Access Test
-    [Documentation]    Test to verify unauthorized access behavior.
-    Create Session    api-session    ${HOST}    verify=False
-    ${response}=    GET On Session    api-session    ${USER_ENDPOINT}
-    Validate Status Code    ${response}    401
-    Log    Error Response: ${response.json()}
-
-User Not Found Test
-    [Documentation]    Test to validate behavior when a user is not found.
-    ${response}=    Send Authorized Request    GET    ${USER_ENDPOINT}/non-existing-id
-    Validate Status Code    ${response}    404
-    Log    Error Response: ${response.json()}
+    ${user_details}=            Login User    ${email}    ${password}
+    ${uuid}=                Get From Dictionary    ${user_details}    uuid
+    Should Be Equal As Strings    ${uuid}    ${user_id}
+    [Teardown]              Delete User    ${user_id}

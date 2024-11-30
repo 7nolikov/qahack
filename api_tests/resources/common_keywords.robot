@@ -12,6 +12,7 @@ ${USER_ENDPOINT}    /users
 
 *** Keywords ***
 Send Authorized Request
+    [Documentation]    Sends an HTTP request with authorization and returns the parsed JSON response.
     [Arguments]    ${method}    ${endpoint}    ${body}=${None}
     Log    \n=== Request Details ===\nMethod: ${method}\nEndpoint: ${HOST}${endpoint}\nHeaders: {"Authorization": "Bearer ${QA_TOKEN}", "X-Task-Id": "${X_TASK_ID}"}\nBody: ${body}\n
     Create Session    api-session    ${HOST}    headers={"Authorization": "Bearer ${QA_TOKEN}", "X-Task-Id": "${X_TASK_ID}"}    verify=False
@@ -25,27 +26,31 @@ Send Authorized Request
     Log    \n=== Response Details ===\nStatus Code: ${response.status_code}\nHeaders: ${response.headers}\nBody: ${response.text}\n
     RETURN    ${response}
 
-Validate Status Code
-    [Arguments]    ${response}    ${expected_code}
-    Log    Validating Status Code: Expected=${expected_code}, Actual=${response.status_code}
-    Should Be Equal As Strings    ${response.status_code}    ${expected_code}
+Parse JSON Response
+    [Documentation]    Parses the JSON content of a response and returns it as a dictionary.
+    [Arguments]         ${response}
+    ${content_type}=    Get From Dictionary    ${response.headers}    Content-Type
+    ${parsed}=          Run Keyword If     '${content_type}' == 'application/json'   Convert To Dictionary    ${response.json()}
+    ...                 ELSE    Fail    Response content is not in JSON format.
+    RETURN            ${parsed}
 
-Create User
-    [Documentation]    Create a user and return the user ID.
-    ${name}=         FakerLibrary.Name
-    ${email}=        FakerLibrary.Email
-    ${password}=     FakerLibrary.Password
-    ${nickname}=     FakerLibrary.UserName
-    ${body}=    Create Dictionary    email=${email}    password=${password}    name=${name}    nickname=${nickname}
-    ${response}=    Send Authorized Request    POST    ${USER_ENDPOINT}    ${body}
-    Validate Status Code    ${response}    200
-    ${user_id}=    Get From Dictionary    ${response.json()}    uuid
-    Log    User Created: ID=${user_id}, Email=${email}, Name=${name}
-    [Return]    ${user_id}
 
-Delete User
-    [Arguments]    ${user_id}
-    [Documentation]    Delete a user by ID and validate the deletion.
-    ${response}=    Send Authorized Request    DELETE    ${USER_ENDPOINT}/${user_id}
-    Validate Status Code    ${response}    204
-    Log    User Deleted: ID=${user_id}
+Response Should Be OK
+    [Arguments]    ${response}
+    Should Be Equal As Strings    ${response.status_code}    200
+    Log    Response is OK: ${response.status_code}
+
+Response Should Be Created
+    [Arguments]    ${response}
+    Should Be Equal As Strings    ${response.status_code}    201
+    Log    Response is Created: ${response.status_code}
+
+Response Should Be No Content
+    [Arguments]    ${response}
+    Should Be Equal As Strings    ${response.status_code}    204
+    Log    Response is No Content: ${response.status_code}
+
+Response Should Be Not Found
+    [Arguments]    ${response}
+    Should Be Equal As Strings    ${response.status_code}    404
+    Log    Response is Not Found: ${response.status_code}
