@@ -6,6 +6,7 @@ Resource        ../resources/common_keywords.robot
 Test API-1 Delete User
     [Documentation]                  Deletes a user by ID.
     [Arguments]                      ${CURRENT_HOST}
+    Set Test Variable       ${host}   ${CURRENT_HOST}
     Set Test Variable                ${task_id}   api-1
     ${user_details}=                 Create User    ${task_id}
     ${user_id}=                      Get From Dictionary    ${user_details}    uuid
@@ -16,6 +17,7 @@ Test API-1 Delete User
 Test API-3 Create User
     [Documentation]    Creates a new user and verifies the response.
     [Arguments]        ${CURRENT_HOST}
+    Set Test Variable       ${host}   ${CURRENT_HOST}
     Set Test Variable  ${task_id}   api-3
     ${email}=          FakerLibrary.Email
     ${password}=       FakerLibrary.Password
@@ -27,6 +29,7 @@ Test API-3 Create User
 Test API-4 Update User
     [Documentation]         Updates a user's details and verifies the response.
     [Arguments]             ${CURRENT_HOST}
+    Set Test Variable       ${host}   ${CURRENT_HOST}
     Set Test Variable       ${task_id}   api-4
     ${user_details}=        Create User    ${task_id}
     ${user_id}=             Get From Dictionary    ${user_details}    uuid
@@ -40,6 +43,7 @@ Test API-4 Update User
 Test API-6 List Users
     [Documentation]         Retrieves the list of users and verifies that it is not empty.
     [Arguments]             ${CURRENT_HOST}
+    Set Test Variable       ${host}   ${CURRENT_HOST}
     Set Test Variable        ${task_id}   api-6
     ${user_details}=         Create User    ${task_id}
     ${users}=               List Users    ${task_id}
@@ -48,6 +52,7 @@ Test API-6 List Users
 Test API-7 Get User by email and password
     [Documentation]         Verifies that a user can log in successfully.
     [Arguments]             ${CURRENT_HOST}
+    Set Test Variable       ${host}   ${CURRENT_HOST}
     Set Test Variable        ${task_id}   api-7
     ${name}=         FakerLibrary.Name
     ${email}=        FakerLibrary.Email
@@ -64,6 +69,7 @@ Test API-7 Get User by email and password
 Test API-21 List Users
     [Documentation]         Verifies that the list of users can be retrieved.
     [Arguments]             ${CURRENT_HOST}
+    Set Test Variable       ${host}   ${CURRENT_HOST}
     Set Test Variable        ${task_id}   api-21
     ${user_details}=         Create User    ${task_id}
     ${users}=               List Users    ${task_id}
@@ -72,6 +78,7 @@ Test API-21 List Users
 Test API-22 Create User
     [Documentation]         Verifies that a user can be created successfully.
     [Arguments]             ${CURRENT_HOST}
+    Set Test Variable       ${host}   ${CURRENT_HOST}
     Set Test Variable        ${task_id}   api-22
     ${user_details}=         Create User    ${task_id}
     ${user_id}=              Get From Dictionary    ${user_details}    uuid
@@ -81,6 +88,7 @@ Test API-22 Create User
 Test API-23 Get User by ID
     [Documentation]         Verifies that user details can be retrieved by ID.
     [Arguments]             ${CURRENT_HOST}
+    Set Test Variable       ${host}   ${CURRENT_HOST}
     Set Test Variable        ${task_id}   api-23
     ${user_details}=         Create User    ${task_id}
     ${user_id}=              Get From Dictionary    ${user_details}    uuid
