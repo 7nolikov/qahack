@@ -18,6 +18,7 @@ Send Authorized Request
     ...    ELSE IF    '${method}' == 'DELETE'   DELETE On Session    api-session-${task_id}    ${endpoint}
     ...    ELSE                                  Fail    Unsupported HTTP method: ${method}
 
+    Run Keyword If    '${response}' is None    Fail    No response received for the ${method} request to ${endpoint}
     Log    \n=== Response Details ===\nStatus Code: ${response.status_code}\nHeaders: ${response.headers}\nBody: ${response.text}\n
     RETURN    ${response}
 
@@ -31,20 +32,24 @@ Parse JSON Response
 
 Response Should Be OK
     [Arguments]    ${response}
+    Run Keyword If    '${response}' is None    Fail    No response received
     Should Be Equal As Strings    ${response.status_code}    200
     Log    Response is OK: ${response.status_code}
 
 Response Should Be Created
     [Arguments]    ${response}
+    Run Keyword If    '${response}' is None    Fail    No response received
     Should Be Equal As Strings    ${response.status_code}    201
     Log    Response is Created: ${response.status_code}
 
 Response Should Be No Content
     [Arguments]    ${response}
+    Run Keyword If    '${response}' is None    Fail    No response received
     Should Be Equal As Strings    ${response.status_code}    204
     Log    Response is No Content: ${response.status_code}
 
 Response Should Be Not Found
     [Arguments]    ${response}
+    Run Keyword If    '${response}' is None    Fail    No response received
     Should Be Equal As Strings    ${response.status_code}    404
     Log    Response is Not Found: ${response.status_code}
