@@ -1,16 +1,34 @@
 *** Settings ***
 Library         RequestsLibrary
-Resource        ../config/${ENV_FILE}.robot
+Resource        ../resources/variables.robot
+Resource        ../resources/common_keywords.robot
 
-*** Variables ***
-${SETUP_ENDPOINT}    /setup
-${STATUS_ENDPOINT}   /status
+*** Keywords ***
+Setup
+    [Arguments]    ${host}
+    Set Test Variable        ${task_id}   api-1
+    ${response}=       Send Authorized Request    ${task_id}    POST    ${host}/setup
+    Run Keyword If    '${response}' is None    Fail    No response received
+    Should Be Equal As Strings    ${response.status_code}    205
+    Log    Response is OK: ${response.status_code}
+
+Validate Status
+    [Arguments]    ${host}
+    Set Test Variable        ${task_id}   api-1
+    ${response}=       Send Authorized Request    ${task_id}    GET    ${host}/status
+    Run Keyword If    '${response}' is None    Fail    No response received
+    Should Be Equal As Strings    ${response.status_code}    200
+    Log    Response is OK: ${response.status_code}
 
 *** Test Cases ***
-Run Setup and Validate Status
+Run Setup and Validate Status on Dev Environment
     [Documentation]   Perform API setup and validate with status request.
-    Create Session    api-session    ${HOST}    headers={"Authorization": "Bearer ${os.environ['QA_TOKEN']}"}
-    ${setup_response}    Post Request    api-session    ${SETUP_ENDPOINT}
-    Should Be Equal As Strings           ${setup_response.status_code}    205
-    ${status_response}   Get Request     api-session    ${STATUS_ENDPOINT}
-    Should Be Equal As Strings           ${status_response.status_code}   200
+    [Tags]            setup    dev
+    Setup             ${DEV_HOST}
+    Validate Status    ${DEV_HOST}
+
+Run Setup and Validate Status on Release Environment
+    [Documentation]   Perform API setup and validate with status request.
+    [Tags]            setup    release
+    Setup             ${RELEASE_HOST}
+    Validate Status    ${RELEASE_HOST}
